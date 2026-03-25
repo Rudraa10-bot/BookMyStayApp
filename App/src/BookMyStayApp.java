@@ -8,32 +8,39 @@ public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-    System.out.println("Room Allocation Process");
+    System.out.println("Booking History Reporting");
 
     BookingRequestQueue bookingQueue = new BookingRequestQueue();
     RoomInventory inventory = new RoomInventory();
     RoomAllocationService allocateService=new RoomAllocationService();
     AddOnServiceManager serviceManager=new AddOnServiceManager();
+    BookingHistory history=new BookingHistory();
 
     Reservation r1=new Reservation("Abhi", "Single");
+    Reservation r2=new Reservation("Subha", "Double");
+    Reservation r3=new Reservation("Vanmathi", "Suite");
 
     bookingQueue.addRequest(r1);
+    bookingQueue.addRequest(r2);
+    bookingQueue.addRequest(r3);
+
 
     String reservationId =null;
 
     while(bookingQueue.hasPendingRequests()){
         Reservation current=bookingQueue.getNextRequest();
         reservationId=allocateService.allocateRoom(current, inventory);
+
+        if(reservationId!=null){
+            history.AddReservations(current);
+        }
     }
 
-    serviceManager.addService(reservationId, new AddOnService("Breakfast",500));
-    serviceManager.addService(reservationId,new AddOnService("Spa",1000));
+    System.out.println("\nBooking History Report");
 
-    double total= serviceManager.calculateTotalServiceCost(reservationId);
-
-    System.out.println("\nAdd-On Service Selection");
-    System.out.println("Reservation ID: "+reservationId);
-    System.out.println("Total Add-On Cost: "+total);
+    for(Reservation r : history.getConfirmedReservations()){
+        System.out.println("Guest: "+r.getGuestName()+" , Room Type: "+r.getRoomType());
+    }
     }
 }
 
@@ -149,7 +156,6 @@ class RoomAllocationService{
 
             inventory.updateAvailability(roomType, availability.get(roomType)-1);
 
-            System.out.println("Booking Confirmed for Guest: "+reservation.getGuestName()+", Room Type: "+roomType);
             return roomId;
         }
         return null;
@@ -201,5 +207,20 @@ class AddOnServiceManager{
             total+=s.getCost();
         }
         return total;
+    }
+}
+
+class BookingHistory{
+    private List<Reservation> confirmedReservations;
+    public BookingHistory(){
+        confirmedReservations=new ArrayList<>();
+    }
+
+    public void AddReservations(Reservation reservation){
+        confirmedReservations.add(reservation);
+    }
+
+    public List<Reservation> getConfirmedReservations() {
+        return confirmedReservations;
     }
 }
